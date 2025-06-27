@@ -29,12 +29,12 @@ case $ENVIRONMENT in
   "dev")
     echo "Deploying development environment..."
     cd docker
-    docker compose up -d
+    docker compose --env-file ../.env up -d
     ;;
   "prod")
     echo "Deploying production environment..."
     cd docker
-    docker compose \
+    docker compose --env-file ../.env \
       -f docker-compose.yml \
       -f nextcloud/docker-compose.nextcloud.yml \
       -f samba/docker-compose.samba.yml \
@@ -43,7 +43,7 @@ case $ENVIRONMENT in
   "nextcloud")
     echo "Deploying Nextcloud only..."
     cd docker
-    docker compose \
+    docker compose --env-file ../.env \
       -f docker-compose.yml \
       -f nextcloud/docker-compose.nextcloud.yml \
       up -d
@@ -51,7 +51,7 @@ case $ENVIRONMENT in
   "samba")
     echo "Deploying Samba only..."
     cd docker
-    docker compose \
+    docker compose --env-file ../.env \
       -f docker-compose.yml \
       -f samba/docker-compose.samba.yml \
       up -d
