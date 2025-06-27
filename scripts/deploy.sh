@@ -34,19 +34,19 @@ case $ENVIRONMENT in
   "prod")
     echo "Deploying production environment..."
     cd docker
-    docker compose -f docker compose.yml up -d
-    docker compose -f nextcloud/docker compose.nextcloud.yml up -d
-    docker compose -f samba/docker compose.samba.yml up -d
+    docker compose -f docker-compose.yml up -d
+    docker compose -f nextcloud/docker-compose.nextcloud.yml up -d
+    docker compose -f samba/docker-compose.samba.yml up -d
     ;;
   "nextcloud")
     echo "Deploying Nextcloud only..."
     cd docker
-    docker compose -f nextcloud/docker compose.nextcloud.yml up -d
+    docker compose -f nextcloud/docker-compose.nextcloud.yml up -d
     ;;
   "samba")
     echo "Deploying Samba only..."
     cd docker
-    docker compose -f samba/docker compose.samba.yml up -d
+    docker compose -f samba/docker-compose.samba.yml up -d
     ;;
   *)
     echo "Unknown environment: $ENVIRONMENT"
