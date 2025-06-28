@@ -1,7 +1,7 @@
-# Nextcloud AIO Traefik 동적 라우팅 (Host IP 방식)
+# Nextcloud AIO Traefik 동적 라우팅 (컨테이너 방식)
 # 참조: https://github.com/techworks-id/nextcloud_aio-traefik
 # 
-# AIO가 bridge 네트워크를 사용하므로 호스트 IP로 접근
+# Traefik과 AIO가 동일한 네트워크에 있으므로 컨테이너 이름으로 접근
 
 http:
   routers:
@@ -30,14 +30,14 @@ http:
       service: nextcloud-service
 
   # ===========================================
-  # 🎯 서비스 정의 (Host IP 방식)
+  # 🎯 서비스 정의 (컨테이너 방식)
   # ===========================================
   services:
-    # AIO Apache 서비스 (포트 11000)
+    # AIO Apache 서비스 (컨테이너 이름 사용)
     nextcloud-service:
       loadBalancer:
         servers:
-          - url: "http://172.30.1.42:11000"
+          - url: "http://nextcloud-aio-apache:11000"
         passHostHeader: true
 
   # ===========================================

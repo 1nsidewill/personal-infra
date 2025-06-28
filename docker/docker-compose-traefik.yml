@@ -58,6 +58,7 @@ services:
       
     networks:
       - proxy
+      - nextcloud-aio
       
     labels:
       - "traefik.enable=true"
@@ -73,4 +74,7 @@ volumes:
 networks:
   proxy:
     name: ${PROXY_NETWORK:-proxy}
+    external: true
+  nextcloud-aio:
+    name: ${NEXTCLOUD_AIO_NETWORK:-nextcloud-aio}
     external: true 

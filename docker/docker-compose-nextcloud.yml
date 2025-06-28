@@ -14,8 +14,10 @@ services:
       # Docker 소켓 (macOS/Windows에서는 경로 조정 필요)
       - /var/run/docker.sock:/var/run/docker.sock:ro
       
-    # 기본 bridge 네트워크 사용 (참조 리포와 동일)
-    network_mode: bridge
+    # 참조 레포와 동일한 네트워크 구조
+    networks:
+      - proxy
+      - nextcloud-aio
     
     ports:
       # HTTP/HTTPS는 Traefik이 처리하므로 비활성화
@@ -28,12 +30,18 @@ services:
       # 🌐 Apache 웹서버 설정 (필수)
       # ==========================================
       - APACHE_PORT=${APACHE_PORT:-11000}
-      - APACHE_IP_BINDING=${APACHE_IP_BINDING:-127.0.0.1}
+      - APACHE_IP_BINDING=${APACHE_IP_BINDING:-0.0.0.0}
       
       # ==========================================
       # 📁 데이터 디렉토리 설정
       # ==========================================
       - NEXTCLOUD_DATADIR=${NEXTCLOUD_DATADIR:-/mnt/ncdata}
+      
+      # ==========================================
+      # 🔒 도메인 검증 설정 (중요!)
+      # ==========================================
+      - SKIP_DOMAIN_VALIDATION=${SKIP_DOMAIN_VALIDATION:-true}
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_DOMAIN}
       
       # ==========================================
       # 🚀 성능 & 제한 설정 (기본값 사용)
@@ -54,4 +62,13 @@ services:
 volumes:
   # AIO 마스터 컨테이너 볼륨 (이름 변경 금지)
   nextcloud_aio_mastercontainer:
-    name: nextcloud_aio_mastercontainer 
+    name: nextcloud_aio_mastercontainer
+
+networks:
+  # 참조 레포와 동일한 네트워크 구조
+  proxy:
+    name: ${PROXY_NETWORK:-proxy}
+    external: true
+  nextcloud-aio:
+    name: ${NEXTCLOUD_AIO_NETWORK:-nextcloud-aio}
+    external: true 
