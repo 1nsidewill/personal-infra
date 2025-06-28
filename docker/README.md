@@ -1,205 +1,224 @@
-# Nextcloud All-in-One (AIO) 배포 가이드
+# 🚀 통합 서비스 관리 시스템
 
-## 🚀 개요
+Docker 기반의 확장 가능한 서비스 관리 플랫폼입니다.
 
-이 설정은 **Nextcloud All-in-One (AIO)**을 Traefik 리버스 프록시와 함께 배포하는 완전한 솔루션입니다.
+## 📋 **지원 서비스**
 
-### ✨ 특징
-- **Nextcloud AIO**: 공식 All-in-One 솔루션 사용
-- **Traefik 통합**: 자동 SSL 인증서 및 리버스 프록시
-- **보안 헤더**: HSTS, CSP 등 모든 보안 헤더 자동 설정
-- **간단한 관리**: 단일 스크립트로 배포 및 관리
+- **🌐 Traefik** - 리버스 프록시 & SSL 관리  
+- **☁️ Nextcloud** - 클라우드 스토리지 & 협업  
+- **⚡ FastAPI** - 백엔드 API 서버  
+- **🔴 Redis** - 인메모리 캐시 & 세션  
+- **🐘 PostgreSQL** - 관계형 데이터베이스  
+- **🔍 Qdrant** - 벡터 데이터베이스  
 
-## 📋 사전 요구사항
+## 🛠️ **설치 & 초기 설정**
 
-1. **Docker & Docker Compose** 설치
-2. **도메인** 및 DNS 설정 권한
-3. **포트 80, 443, 8080, 9090** 접근 가능
+### 1. 환경 설정
 
-## 🎯 빠른 시작
-
-### 1단계: 환경 설정
 ```bash
-cd docker
+# 환경변수 파일 생성
 cp .env.example .env
-nano .env  # 도메인과 이메일 설정
+
+# 필수 설정 편집
+nano .env
 ```
 
-`.env` 파일에서 다음을 설정:
+### 2. DNS 설정 (Nextcloud용)
+
+**Cloudflare DNS:**
+- Type: `A`  
+- Name: `your-domain.com` 또는 `nextcloud`  
+- Value: `서버IP`  
+- **Proxy Status: DNS Only (중요!)**
+
+### 3. 전체 배포
+
 ```bash
+# 모든 설정된 서비스 배포
+./scripts/deploy.sh deploy
+```
+
+## 🎮 **서비스 관리**
+
+### 기본 명령어
+
+```bash
+# 사용법 확인
+./scripts/deploy.sh
+
+# 서비스 목록 확인
+./scripts/deploy.sh list
+
+# 모든 서비스 시작
+./scripts/deploy.sh start all
+
+# 특정 서비스 시작
+./scripts/deploy.sh start nextcloud
+
+# 서비스 상태 확인
+./scripts/deploy.sh status all
+
+# 로그 확인
+./scripts/deploy.sh logs nextcloud
+
+# 서비스 재시작
+./scripts/deploy.sh restart traefik
+
+# 서비스 정지
+./scripts/deploy.sh stop all
+```
+
+### 확장 가능한 구조
+
+```
+.
+├── scripts/
+│   └── deploy.sh               # 통합 관리 스크립트
+├── docker/
+│   ├── docker-compose.yml     # 기본 서비스 (Traefik + Nextcloud)
+│   ├── .env                   # 환경변수
+│   ├── fastapi/
+│   │   └── docker-compose.fastapi.yml    # FastAPI 서비스
+│   ├── redis/
+│   │   └── docker-compose.redis.yml      # Redis 서비스
+│   ├── postgres/
+│   │   └── docker-compose.postgres.yml   # PostgreSQL 서비스
+│   └── qdrant/
+│       └── docker-compose.qdrant.yml     # Qdrant 서비스
+```
+
+## 🌟 **새 서비스 추가하기**
+
+### 1. Compose 파일 생성
+
+```bash
+mkdir docker/myservice
+cat > docker/myservice/docker-compose.myservice.yml << 'EOF'
+services:
+  myservice:
+    image: myservice:latest
+    container_name: myservice
+    restart: unless-stopped
+    networks:
+      - web
+
+networks:
+  web:
+    external: true
+EOF
+```
+
+### 2. 스크립트에 등록
+
+`scripts/deploy.sh` 파일의 다음 섹션들을 수정:
+
+```bash
+# 서비스 목록에 추가
+AVAILABLE_SERVICES+=(
+    "myservice"
+)
+
+# 파일 매핑 추가
+COMPOSE_FILES[myservice]="myservice/docker-compose.myservice.yml"
+
+# 설명 추가
+SERVICE_DESCRIPTIONS[myservice]="내 새로운 서비스"
+```
+
+### 3. 서비스 배포
+
+```bash
+./scripts/deploy.sh start myservice
+```
+
+## 🔧 **환경변수 설정**
+
+```bash
+# Nextcloud 설정
 NEXTCLOUD_DOMAIN=nextcloud.yourdomain.com
 ACME_EMAIL=your-email@example.com
+SKIP_DOMAIN_VALIDATION=false
+
+# FastAPI 설정 (추가시)
+FASTAPI_PORT=8000
+FASTAPI_SECRET_KEY=your-secret-key
+
+# 데이터베이스 설정 (추가시)
+POSTGRES_DB=myapp
+POSTGRES_USER=myuser
+POSTGRES_PASSWORD=mypassword
 ```
 
-### 2단계: DNS 설정 (중요!)
-Cloudflare 또는 DNS 제공업체에서:
-```
-A 레코드: nextcloud.yourdomain.com → 서버IP
-```
+## 📱 **서비스 접속**
 
-⚠️ **Cloudflare 사용시 주의사항:**
-- **DNS Only (회색 구름)** 선택 - Proxied 끄기
-- Proxied를 사용하면 SSL 인증서 발급 실패 가능
-- Let's Encrypt HTTP Challenge가 제대로 작동하려면 DNS Only 필요
+### Nextcloud
+- **관리자 패널**: `https://your-domain.com:8080`
+- **메인 앱**: `https://your-domain.com`
 
-### 3단계: 배포 실행
+### Traefik
+- **Dashboard**: `http://서버IP:9090`
+
+### 기타 서비스
+설정에 따라 하위 도메인 또는 포트로 접속
+
+## 🔍 **문제 해결**
+
+### 일반적인 문제들
+
 ```bash
-chmod +x deploy-nextcloud-aio.sh
-./deploy-nextcloud-aio.sh
+# 상태 확인
+./scripts/deploy.sh status all
+
+# 로그 확인
+./scripts/deploy.sh logs nextcloud
+
+# 네트워크 문제
+docker network ls
+docker network inspect web
+
+# 서비스 재시작
+./scripts/deploy.sh restart all
 ```
 
-## 🔧 구조 설명
+### Nextcloud 문제
 
-### 컨테이너 구성
-- **traefik**: 리버스 프록시 + SSL 관리
-- **nextcloud-aio**: AIO 마스터 컨테이너 (다른 모든 컨테이너 관리)
+1. **도메인 접근 불가**
+   - DNS 전파 확인 (최대 24시간)
+   - Cloudflare Proxy 비활성화 확인
 
-### 포트 구성 (포트 충돌 해결됨)
-- **80**: HTTP (HTTPS로 자동 리다이렉트)
-- **443**: HTTPS (Nextcloud 메인)
-- **8080**: AIO 관리자 패널
-- **9090**: Traefik Dashboard
+2. **SSL 인증서 오류**
+   - Let's Encrypt 로그 확인
+   - HTTP 챌린지 접근 가능 확인
 
-### 네트워크
-- **web**: Traefik과 AIO 간 통신
+3. **모바일 앱 연결 안됨**
+   - 도메인 설정 정확한지 확인
+   - AIO 관리자 패널에서 Nextcloud 설정 완료 확인
 
-## 📱 접속 방법
+## 🚀 **성능 최적화**
 
-### AIO 관리자 패널
-```
-https://yourdomain.com:8080
-```
-여기서 Nextcloud 앱들을 설치하고 설정합니다.
+### 자동 업데이트 (Watchtower)
 
-### Nextcloud 앱
-```  
-https://yourdomain.com
-```
-실제 Nextcloud 서비스에 접속합니다.
-
-### Traefik Dashboard
-```
-http://서버IP:9090
-```
-Traefik 상태 모니터링
-
-## 🛠️ 관리 명령어
-
-### 컨테이너 상태 확인
 ```bash
-docker-compose ps
-docker-compose logs -f
+docker run -d \
+  --name watchtower \
+  --restart unless-stopped \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  containrrr/watchtower
 ```
 
-### 개별 컨테이너 로그
+### 백업 자동화
+
 ```bash
-docker logs nextcloud-aio-mastercontainer
-docker logs traefik
+# Crontab에 추가
+0 2 * * * /path/to/backup-script.sh
 ```
 
-### 재시작
-```bash
-docker-compose restart
-```
-
-### 완전 재배포
-```bash
-docker-compose down
-./deploy-nextcloud-aio.sh
-```
-
-## 🔍 트러블슈팅
-
-### SSL 인증서 발급 실패
-1. **DNS 설정 확인**:
-   ```bash
-   nslookup yourdomain.com
-   ```
-
-2. **Cloudflare Proxied 확인**:
-   - DNS Only (회색 구름)로 설정되어 있는지 확인
-   - Proxied (주황색 구름)이면 끄기
-
-3. **포트 접근성 확인**:
-   ```bash
-   netstat -tulpn | grep :80
-   netstat -tulpn | grep :443
-   ```
-
-### AIO 컨테이너가 시작되지 않는 경우
-1. Docker 소켓 권한 확인:
-   ```bash
-   ls -la /var/run/docker.sock
-   ```
-
-2. 네트워크 확인:
-   ```bash
-   docker network ls
-   ```
-
-### AIO 관리자 패널 접속 안됨
-1. 포트 8080 확인:
-   ```bash
-   docker logs nextcloud-aio-mastercontainer
-   ```
-
-2. 방화벽 설정 확인 (포트 8080)
-
-## 📚 고급 설정
-
-### 커스텀 데이터 디렉토리
-`.env` 파일에 추가:
-```bash
-NEXTCLOUD_DATADIR=/mnt/ncdata
-```
-
-### 커스텀 백업 디렉토리
-```bash
-NEXTCLOUD_BACKUP_DIR=/mnt/backup
-```
-
-### 도메인 검증 건너뛰기 (개발용)
-```bash
-SKIP_DOMAIN_VALIDATION=true
-```
-
-## 🌐 DNS 설정 상세 가이드
-
-### Cloudflare 설정 (권장)
-1. **DNS 레코드 추가**:
-   - Type: A
-   - Name: nextcloud (또는 원하는 서브도메인)
-   - Content: 서버IP
-   - **Proxy status: DNS only** ← 중요!
-
-2. **SSL/TLS 설정**:
-   - SSL/TLS → Overview → Full (or Full strict)
-   - Edge Certificates → Always Use HTTPS: OFF
-
-### 다른 DNS 제공업체
-- 일반적인 A 레코드 설정으로 충분
-- TTL은 300초 (5분) 권장
-
-## 🆚 기존 설정과의 차이점
-
-### ✅ 장점
-- **공식 지원**: Nextcloud 공식 AIO 사용
-- **자동 관리**: 업데이트, 백업, 모니터링 자동화
-- **안정성**: 모든 컴포넌트가 검증된 조합
-- **간단함**: 복잡한 설정 불필요
-- **포트 충돌 해결**: Traefik Dashboard를 9090 포트로 분리
-
-### 📝 참고사항
-- AIO가 모든 서비스를 자동으로 관리
-- 개별 컨테이너 수정 불가 (AIO 정책)
-- 모든 설정은 AIO 관리자 패널에서
-
-## 🔗 유용한 링크
+## 📚 **참고 자료**
 
 - [Nextcloud AIO 공식 문서](https://github.com/nextcloud/all-in-one)
-- [Traefik 문서](https://doc.traefik.io/traefik/)
-- [Docker Compose 문서](https://docs.docker.com/compose/)
+- [Traefik 공식 문서](https://doc.traefik.io/traefik/)
+- [Docker Compose 가이드](https://docs.docker.com/compose/)
 
 ---
 
-이 설정으로 모든 보안 경고가 해결되고, 앱에서도 정상 접속이 가능합니다! 🎉 
+**🎯 목표:** 하나의 명령어로 모든 서비스를 관리하고, 새로운 서비스를 쉽게 추가할 수 있는 확장 가능한 인프라! 

@@ -1,80 +1,246 @@
-# 🚀 Personal Infrastructure - 빠른 시작
+# 🚀 빠른 시작 가이드
 
-## ⚡ 즉시 배포 (기본 설정)
+## 📋 **개요**
+
+우분투 서버에서 통합 서비스 시스템을 배포하는 완전한 프로세스입니다.
+
+## 🔄 **서버 배포 프로세스**
+
+### 1. 서버 접속 및 코드 업데이트
 
 ```bash
-# Git pull
-git pull
+# 서버 접속
+ssh your-user@your-server
 
-# 바로 배포! (.env 파일 없이도 동작)
-./scripts/deploy.sh prod
+# 프로젝트 디렉토리로 이동
+cd personal-infra
+
+# 최신 코드 받기
+git pull origin main
+
+# 스크립트 실행 권한 확인
+chmod +x scripts/deploy.sh
 ```
 
-## 🔐 기본 접속 정보
+### 2. 환경 설정
 
-### Nextcloud (개인 클라우드)
-- **URL**: http://localhost
-- **관리자 계정**: `admin` / `changeme`
-
-### 데이터베이스들
-- **PostgreSQL**: localhost:5432 (`postgres` / `changeme`)
-- **Redis**: localhost:6379 (패스워드 없음)
-- **Qdrant**: localhost:6333 (패스워드 없음)
-
-### 기타 서비스
-- **Traefik 대시보드**: http://localhost:8080
-- **Samba 파일공유**: `\\localhost` (`admin` / `changeme`)
-
-## 🛡️ 보안 강화 (선택사항)
-
-### 1. 커스텀 패스워드 설정
 ```bash
-# .env 파일 생성
+# docker 디렉토리로 이동
+cd docker
+
+# 환경변수 파일 생성 (첫 번째 배포시만)
 cp .env.example .env
 
-# 원하는 패스워드로 변경
+# 환경변수 설정
 nano .env
 ```
 
-### 2. 서비스 재시작
+**필수 설정 항목:**
 ```bash
-docker-compose down
-./scripts/deploy.sh prod
+# Nextcloud 도메인 (실제 도메인으로 변경)
+NEXTCLOUD_DOMAIN=nextcloud.yourdomain.com
+
+# Let's Encrypt 이메일 (실제 이메일로 변경)
+ACME_EMAIL=your-email@example.com
+
+# 기타 설정
+SKIP_DOMAIN_VALIDATION=false
 ```
 
-## 📊 상태 확인
+### 3. DNS 설정 확인
+
+**Cloudflare 설정 (권장):**
+- Type: `A`
+- Name: `nextcloud` (또는 전체 도메인)
+- Content: `서버 IP`
+- **Proxy Status: DNS Only** ⭐ (중요!)
+
+### 4. 배포 실행
 
 ```bash
-# 모든 컨테이너 확인
-docker ps
+# 프로젝트 루트로 이동
+cd /path/to/personal-infra
 
-# 로그 확인
-docker-compose logs -f
+# 통합 배포 실행
+./scripts/deploy.sh deploy
+```
+
+## 🎮 **일상적인 관리**
+
+### 서비스 상태 확인
+```bash
+./scripts/deploy.sh status all
+```
+
+### 로그 확인
+```bash
+# 전체 로그
+./scripts/deploy.sh logs all
 
 # 특정 서비스 로그
-docker-compose logs -f nextcloud
+./scripts/deploy.sh logs nextcloud
+./scripts/deploy.sh logs traefik
 ```
 
-## 🔄 서비스 관리
+### 서비스 재시작
+```bash
+# 전체 재시작
+./scripts/deploy.sh restart all
+
+# 특정 서비스만
+./scripts/deploy.sh restart nextcloud
+```
+
+### 서비스 정지/시작
+```bash
+# 전체 정지
+./scripts/deploy.sh stop all
+
+# 전체 시작
+./scripts/deploy.sh start all
+```
+
+## 🔄 **코드 업데이트 후 재배포**
+
+새로운 기능이나 설정 변경 후:
 
 ```bash
-# 전체 중지
-docker-compose down
+# 1. 코드 업데이트
+git pull origin main
 
-# 전체 재시작  
-./scripts/deploy.sh prod
-
-# 개별 서비스만
-./scripts/deploy.sh nextcloud
-./scripts/deploy.sh samba
+# 2. 재배포 (기존 컨테이너 정리 + 새로 시작)
+./scripts/deploy.sh deploy
 ```
 
-## 💾 데이터 위치
+## 🌟 **새로운 서비스 추가 워크플로우**
 
-- **데이터베이스**: `./data/` 폴더
-- **Nextcloud 파일**: Docker 볼륨 + `./nas/` 폴더
-- **설정 파일**: `./docker/` 폴더
+### 1. 로컬에서 개발
+
+```bash
+# 새 서비스 디렉토리 생성
+mkdir docker/myservice
+
+# Compose 파일 생성
+cat > docker/myservice/docker-compose.myservice.yml << 'EOF'
+services:
+  myservice:
+    image: myservice:latest
+    container_name: myservice
+    restart: unless-stopped
+    networks:
+      - web
+
+networks:
+  web:
+    external: true
+EOF
+```
+
+### 2. 스크립트에 등록
+
+`scripts/deploy.sh` 수정:
+```bash
+# 서비스 목록에 추가
+AVAILABLE_SERVICES+=(
+    "myservice"
+)
+
+# 파일 매핑 추가
+COMPOSE_FILES[myservice]="myservice/docker-compose.myservice.yml"
+
+# 설명 추가
+SERVICE_DESCRIPTIONS[myservice]="내 새로운 서비스"
+```
+
+### 3. 서버에 배포
+
+```bash
+# 코드 푸시
+git add .
+git commit -m "Add myservice"
+git push origin main
+
+# 서버에서 업데이트
+ssh your-user@your-server
+cd personal-infra
+git pull origin main
+
+# 새 서비스 시작
+./scripts/deploy.sh start myservice
+```
+
+## 🔧 **포트 & 접속 정보**
+
+### 기본 포트
+- **80**: HTTP → HTTPS 리다이렉트
+- **443**: HTTPS (Nextcloud 메인)
+- **8080**: AIO 관리자 패널
+- **9090**: Traefik Dashboard
+
+### 접속 URL
+- **Nextcloud**: `https://your-domain.com`
+- **AIO 관리자**: `https://your-domain.com:8080`
+- **Traefik Dashboard**: `http://서버IP:9090`
+
+## 🔍 **문제 해결**
+
+### SSL 인증서 발급 실패
+```bash
+# DNS 전파 확인
+nslookup your-domain.com
+
+# Cloudflare Proxy 상태 확인 (DNS Only여야 함)
+# 포트 80/443 접근성 확인
+sudo netstat -tulpn | grep :80
+sudo netstat -tulpn | grep :443
+```
+
+### 컨테이너 시작 실패
+```bash
+# 로그 확인
+./scripts/deploy.sh logs nextcloud
+
+# Docker 상태 확인
+docker ps -a
+docker network ls
+```
+
+### 방화벽 설정 (Ubuntu)
+```bash
+# 필요한 포트 열기
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw allow 8080
+sudo ufw allow 9090
+```
+
+## 📚 **참고 명령어**
+
+### Docker 정리
+```bash
+# 사용하지 않는 이미지/컨테이너 정리
+docker system prune -f
+
+# 볼륨 정리 (주의!)
+docker volume prune
+```
+
+### Git 상태 확인
+```bash
+# 현재 브랜치와 상태
+git status
+
+# 최근 커밋 로그
+git log --oneline -5
+```
 
 ---
 
-**💡 팁**: 첫 배포 후 http://localhost 접속해서 Nextcloud 초기 설정을 완료하세요! 
+## 🎯 **핵심 워크플로우**
+
+1. **개발**: 로컬에서 새 서비스 추가
+2. **커밋**: Git으로 코드 관리
+3. **배포**: 서버에서 `git pull` → `./scripts/deploy.sh deploy`
+4. **관리**: `./scripts/deploy.sh [action] [service]`
+
+**목표**: 한 번의 명령어로 모든 서비스 관리! 🚀 

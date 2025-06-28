@@ -1,3 +1,7 @@
+# 통합 서비스 Docker Compose 설정
+# 실행: ./scripts/deploy.sh deploy
+# 관리: ./scripts/deploy.sh [start|stop|restart|logs|status] [service|all]
+
 services:
   # Traefik - Reverse Proxy & Load Balancer
   traefik:
