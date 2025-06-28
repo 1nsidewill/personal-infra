@@ -35,14 +35,23 @@ AVAILABLE_SERVICES=(
     "qdrant"
 )
 
-# Docker Compose 파일 매핑 (새로운 분리된 구조)
+# Docker Compose 파일 매핑 (참조 레포 방식)
 declare -A COMPOSE_FILES
 COMPOSE_FILES[traefik]="docker-compose-traefik.yml"
-COMPOSE_FILES[nextcloud]="docker-compose-nextcloud.yml"
+COMPOSE_FILES[nextcloud]="docker-compose-nextcloud_aio.yml"
 COMPOSE_FILES[fastapi]="fastapi/docker-compose-fastapi.yml"
 COMPOSE_FILES[redis]="redis/docker-compose-redis.yml"
 COMPOSE_FILES[postgres]="postgres/docker-compose-postgres.yml"
 COMPOSE_FILES[qdrant]="qdrant/docker-compose-qdrant.yml"
+
+# 프로젝트명 매핑 (참조 레포와 동일)
+declare -A PROJECT_NAMES
+PROJECT_NAMES[traefik]="traefik"
+PROJECT_NAMES[nextcloud]="nextcloud_aio"
+PROJECT_NAMES[fastapi]="fastapi"
+PROJECT_NAMES[redis]="redis"
+PROJECT_NAMES[postgres]="postgres"
+PROJECT_NAMES[qdrant]="qdrant"
 
 # 서비스 설명
 declare -A SERVICE_DESCRIPTIONS
@@ -162,11 +171,12 @@ ensure_networks() {
     done
 }
 
-# 함수: 서비스별 Docker Compose 실행
+# 함수: 서비스별 Docker Compose 실행 (참조 레포 방식)
 run_compose() {
     local action=$1
     local service=$2
     local compose_file=${COMPOSE_FILES[$service]}
+    local project_name=${PROJECT_NAMES[$service]}
     
     if [ -z "$compose_file" ]; then
         echo -e "${RED}❌ 알 수 없는 서비스: $service${NC}"
@@ -179,8 +189,8 @@ run_compose() {
         return 1
     fi
     
-    echo -e "${GREEN}📦 $service ${action}${NC}"
-    docker compose -f "$compose_file" $action
+    echo -e "${GREEN}📦 $service ${action} (프로젝트: $project_name)${NC}"
+    docker compose -p "$project_name" -f "$compose_file" $action
 }
 
 # 함수: 모든 서비스에 대해 실행 (순서 고려)
@@ -192,18 +202,20 @@ run_all_services() {
         for ((i=${#AVAILABLE_SERVICES[@]}-1; i>=0; i--)); do
             local service="${AVAILABLE_SERVICES[i]}"
             local compose_file=${COMPOSE_FILES[$service]}
+            local project_name=${PROJECT_NAMES[$service]}
             if [ -f "$compose_file" ]; then
-                echo -e "${GREEN}📦 $service $action${NC}"
-                docker compose -f "$compose_file" $action 2>/dev/null || true
+                echo -e "${GREEN}📦 $service $action (프로젝트: $project_name)${NC}"
+                docker compose -p "$project_name" -f "$compose_file" $action 2>/dev/null || true
             fi
         done
     else
         # 시작 시에는 정순으로 (traefik 먼저)
         for service in "${AVAILABLE_SERVICES[@]}"; do
             local compose_file=${COMPOSE_FILES[$service]}
+            local project_name=${PROJECT_NAMES[$service]}
             if [ -f "$compose_file" ]; then
-                echo -e "${GREEN}📦 $service $action${NC}"
-                docker compose -f "$compose_file" $action 2>/dev/null || true
+                echo -e "${GREEN}📦 $service $action (프로젝트: $project_name)${NC}"
+                docker compose -p "$project_name" -f "$compose_file" $action 2>/dev/null || true
                 
                 # 시작 시 잠시 대기 (네트워크 안정화)
                 if [ "$action" = "up -d" ] && [ "$service" = "traefik" ]; then
@@ -225,10 +237,11 @@ show_status() {
         
         for service_name in "${AVAILABLE_SERVICES[@]}"; do
             local compose_file=${COMPOSE_FILES[$service_name]}
+            local project_name=${PROJECT_NAMES[$service_name]}
             if [ -f "$compose_file" ]; then
                 echo ""
-                echo -e "${CYAN}$service_name (${SERVICE_DESCRIPTIONS[$service_name]}):${NC}"
-                docker compose -f "$compose_file" ps 2>/dev/null || echo "  (서비스 없음)"
+                echo -e "${CYAN}$service_name (${SERVICE_DESCRIPTIONS[$service_name]}) - 프로젝트: $project_name:${NC}"
+                docker compose -p "$project_name" -f "$compose_file" ps 2>/dev/null || echo "  (서비스 없음)"
             fi
         done
         
