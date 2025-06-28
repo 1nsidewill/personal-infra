@@ -3,33 +3,33 @@
 # 관리: ./scripts/deploy.sh [start|stop|restart|logs|status] [service|all]
 
 services:
-  # Traefik - Reverse Proxy & Load Balancer
-  traefik:
-    image: traefik:v3.0
-    container_name: traefik
-    restart: unless-stopped
-    command:
-      - --api.insecure=true
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      - --providers.file.directory=/dynamic
-      - --providers.file.watch=true
-      - --entrypoints.web.address=:80
-      - --entrypoints.websecure.address=:443
-      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
-      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
-      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-your-email@example.com}
-      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
-    ports:
-      - "80:80"
-      - "443:443"
-      - "9090:8080"  # Traefik dashboard (포트 변경)
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik:/letsencrypt
-      - ./traefik/dynamic:/dynamic
-    networks:
-      - web
+  # Traefik - Reverse Proxy & Load Balancer (임시 비활성화 - AIO 설정 완료 후 활성화)
+  # traefik:
+  #   image: traefik:v3.0
+  #   container_name: traefik
+  #   restart: unless-stopped
+  #   command:
+  #     - --api.insecure=true
+  #     - --providers.docker=true
+  #     - --providers.docker.exposedbydefault=false
+  #     - --providers.file.directory=/dynamic
+  #     - --providers.file.watch=true
+  #     - --entrypoints.web.address=:80
+  #     - --entrypoints.websecure.address=:443
+  #     - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+  #     - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+  #     - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-your-email@example.com}
+  #     - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #     - "9090:8080"  # Traefik dashboard (포트 변경)
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #     - ./traefik:/letsencrypt
+  #     - ./traefik/dynamic:/dynamic
+  #   networks:
+  #     - web
 
   # Nextcloud All-in-One Master Container
   nextcloud-aio:
