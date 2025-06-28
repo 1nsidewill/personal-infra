@@ -41,7 +41,6 @@ services:
       # 🔒 도메인 검증 설정 (중요!)
       # ==========================================
       - SKIP_DOMAIN_VALIDATION=${SKIP_DOMAIN_VALIDATION:-true}
-      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_DOMAIN}
       
       # ==========================================
       # 🚀 성능 & 제한 설정 (기본값 사용)
