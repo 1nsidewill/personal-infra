@@ -1,5 +1,5 @@
 # Nextcloud All-in-One (AIO) 컨테이너
-# 참조: https://github.com/techworks-id/nextcloud_aio-traefik
+# 최신 공식 문서 기반: https://github.com/nextcloud/all-in-one/blob/main/reverse-proxy.md
 
 services:
   nextcloud-aio-mastercontainer:
@@ -14,7 +14,7 @@ services:
       # Docker 소켓 (macOS/Windows에서는 경로 조정 필요)
       - /var/run/docker.sock:/var/run/docker.sock:ro
       
-    # 참조 레포와 동일한 네트워크 구조
+    # 최신 네트워크 구조
     networks:
       - proxy
       - nextcloud-aio
@@ -27,9 +27,10 @@ services:
       
     environment:
       # ==========================================
-      # 🌐 Apache 웹서버 설정 (필수)
+      # 🌐 Apache 웹서버 설정 (네트워크 바인딩)
       # ==========================================
       - APACHE_PORT=${APACHE_PORT:-11000}
+      # 🔧 네트워크 바인딩: Docker 환경에서는 0.0.0.0 권장 (컨테이너 간 통신)
       - APACHE_IP_BINDING=${APACHE_IP_BINDING:-0.0.0.0}
       
       # ==========================================
@@ -38,12 +39,12 @@ services:
       - NEXTCLOUD_DATADIR=${NEXTCLOUD_DATADIR:-/mnt/ncdata}
       
       # ==========================================
-      # 🔒 도메인 검증 설정 (중요!)
+      # 🔒 도메인 검증 설정 (최신 권장)
       # ==========================================
       - SKIP_DOMAIN_VALIDATION=${SKIP_DOMAIN_VALIDATION:-true}
       
       # ==========================================
-      # 🚀 성능 & 제한 설정 (기본값 사용)
+      # 🚀 성능 & 제한 설정
       # ==========================================
       - NEXTCLOUD_UPLOAD_LIMIT=${NEXTCLOUD_UPLOAD_LIMIT:-10G}
       - NEXTCLOUD_MAX_TIME=${NEXTCLOUD_MAX_TIME:-3600}
@@ -64,7 +65,7 @@ volumes:
     name: nextcloud_aio_mastercontainer
 
 networks:
-  # 참조 레포와 동일한 네트워크 구조
+  # 최신 네트워크 구조
   proxy:
     name: ${PROXY_NETWORK:-proxy}
     external: true

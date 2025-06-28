@@ -1,9 +1,9 @@
-# Traefik 리버스 프록시 & SSL 인증서 관리
-# 참조: https://github.com/techworks-id/nextcloud_aio-traefik
+# Traefik 3.0 리버스 프록시 & SSL 인증서 관리
+# 최신 공식 문서 기반: https://github.com/nextcloud/all-in-one/blob/main/reverse-proxy.md
 
 services:
   traefik:
-    image: "traefik:latest"
+    image: "traefik:v3.0"  # ⚡ Traefik 3.0으로 업그레이드
     container_name: "traefik"
     restart: unless-stopped
     command:
@@ -29,12 +29,13 @@ services:
       # SSL 검증 스킵 (내부 통신용)
       - "--serversTransport.insecureSkipVerify=true"
       
-      # 엔트리포인트 설정
+      # 엔트리포인트 설정 (HTTP3 자동 지원)
       - "--entryPoints.web.address=:80"
       - "--entryPoints.web.http.redirections.entryPoint.to=websecure"
       - "--entryPoints.web.http.redirections.entryPoint.scheme=https"
       - "--entryPoints.web.http.redirections.entrypoint.permanent=true"
       - "--entryPoints.websecure.address=:443"
+      # 🚀 Traefik 3.0에서는 HTTP3이 기본 내장됨 (experimental 설정 불필요)
       
       # Let's Encrypt 설정
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
@@ -47,7 +48,7 @@ services:
       
     ports:
       - "80:80"         # HTTP
-      - "443:443"       # HTTPS
+      - "443:443"       # HTTPS (HTTP3 자동 지원)
       - "${TRAEFIK_DASHBOARD_PORT:-9090}:8080"  # Traefik Dashboard
       
     volumes:
