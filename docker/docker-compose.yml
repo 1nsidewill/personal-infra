@@ -47,20 +47,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - web
-    labels:
-      - "traefik.enable=true"
-      # AIO Interface (관리자 패널)
-      - "traefik.http.routers.nextcloud-aio.rule=Host(`${NEXTCLOUD_DOMAIN}`) && PathPrefix(`/api/`)"
-      - "traefik.http.routers.nextcloud-aio.entrypoints=websecure"
-      - "traefik.http.routers.nextcloud-aio.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.nextcloud-aio.service=nextcloud-aio"
-      - "traefik.http.services.nextcloud-aio.loadbalancer.server.port=8080"
-      # Nextcloud 메인 앱
-      - "traefik.http.routers.nextcloud.rule=Host(`${NEXTCLOUD_DOMAIN}`)"
-      - "traefik.http.routers.nextcloud.entrypoints=websecure"
-      - "traefik.http.routers.nextcloud.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.nextcloud.service=nextcloud"
-      - "traefik.http.services.nextcloud.loadbalancer.server.port=11000"
 
 networks:
   web:
