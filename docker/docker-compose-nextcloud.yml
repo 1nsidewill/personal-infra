@@ -1,0 +1,81 @@
+# Nextcloud All-in-One (AIO) 컨테이너
+# 참조: https://github.com/techworks-id/nextcloud_aio-traefik
+
+services:
+  nextcloud-aio-mastercontainer:
+    image: nextcloud/all-in-one:latest
+    init: true
+    restart: unless-stopped
+    container_name: nextcloud-aio-mastercontainer
+    
+    volumes:
+      # AIO 설정 볼륨 (이름 변경 금지)
+      - nextcloud_aio_mastercontainer:/mnt/docker-aio-config
+      # Docker 소켓 (macOS/Windows에서는 경로 조정 필요)
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      
+    # 기본 bridge 네트워크 사용 (docker run과 동일)
+    network_mode: bridge
+    
+    ports:
+      # HTTP/HTTPS는 Traefik이 처리하므로 비활성화
+      # - 80:80    # Traefik이 처리
+      # - 8443:8443  # Traefik이 처리
+      - "${AIO_ADMIN_PORT}:8080"  # AIO 관리 패널
+      
+    environment:
+      # ==========================================
+      # 🕒 시간대 설정
+      # ==========================================
+      - TZ=${TZ}
+      
+      # ==========================================
+      # 🌐 Apache 웹서버 설정
+      # ==========================================
+      - APACHE_PORT=${APACHE_PORT}
+      - APACHE_IP_BINDING=${APACHE_IP_BINDING}
+      
+      # ==========================================
+      # 📁 데이터 디렉토리 설정
+      # ==========================================
+      - NEXTCLOUD_DATADIR=${NEXTCLOUD_DATADIR}
+      
+      # ==========================================
+      # 🚀 성능 & 제한 설정
+      # ==========================================
+      - NEXTCLOUD_UPLOAD_LIMIT=${NEXTCLOUD_UPLOAD_LIMIT}
+      - NEXTCLOUD_MAX_TIME=${NEXTCLOUD_MAX_TIME}
+      - NEXTCLOUD_MEMORY_LIMIT=${NEXTCLOUD_MEMORY_LIMIT}
+      
+      # ==========================================
+      # 🔧 추가 패키지 & PHP 확장
+      # ==========================================
+      - NEXTCLOUD_ADDITIONAL_APKS=${NEXTCLOUD_ADDITIONAL_APKS}
+      - NEXTCLOUD_ADDITIONAL_PHP_EXTENSIONS=${NEXTCLOUD_ADDITIONAL_PHP_EXTENSIONS}
+      
+      # ==========================================
+      # 🔒 보안 & 신뢰 도메인 설정
+      # ==========================================
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_DOMAIN}
+      
+      # ==========================================
+      # 🎛️ 선택적 기능들 (주석 해제하여 사용)
+      # ==========================================
+      # - AIO_DISABLE_BACKUP_SECTION=false
+      # - BORG_RETENTION_POLICY=--keep-within=7d --keep-weekly=4 --keep-monthly=6
+      # - COLLABORA_SECCOMP_DISABLED=false
+      # - NEXTCLOUD_MOUNT=/mnt/
+      # - NEXTCLOUD_TRUSTED_CACERTS_DIR=/path/to/my/cacerts
+      # - NEXTCLOUD_STARTUP_APPS=deck twofactor_totp tasks calendar contacts notes
+      # - NEXTCLOUD_ENABLE_DRI_DEVICE=true
+      # - NEXTCLOUD_KEEP_DISABLED_APPS=false
+      # - TALK_PORT=3478
+      # - WATCHTOWER_DOCKER_SOCKET_PATH=/var/run/docker.sock
+      
+    # SELinux 사용 시 필요
+    # security_opt: ["label:disable"]
+
+volumes:
+  # AIO 마스터 컨테이너 볼륨 (이름 변경 금지)
+  nextcloud_aio_mastercontainer:
+    name: nextcloud_aio_mastercontainer 

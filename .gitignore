@@ -1,4 +1,5 @@
 k8s/base/*/secret.yaml
 .env
 .env.example
-.cursor
+.cursor# Traefik 로그 파일들
+docker/traefik/logs/*.log

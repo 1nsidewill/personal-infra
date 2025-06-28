@@ -1,0 +1,14 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+if you need to connect to docker or see some logs on server
+
+ssh will@172.30.1.42
+password is dlrbgk12
+
+that is my local ip of ubuntu server
+
+the project is at /srv/infra
+so if need some change, git pull from there then see docker logs

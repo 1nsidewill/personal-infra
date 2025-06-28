@@ -1,0 +1,80 @@
+# Traefik 리버스 프록시 & SSL 인증서 관리
+# 참조: https://github.com/techworks-id/nextcloud_aio-traefik
+
+services:
+  traefik:
+    image: "traefik:latest"
+    container_name: "traefik"
+    restart: unless-stopped
+    command:
+      # 글로벌 설정
+      - "--global.checkNewVersion=false"
+      - "--global.sendAnonymousUsage=false"
+      
+      # 로그 설정
+      - "--log.level=${TRAEFIK_LOG_LEVEL}"
+      - "--log.filePath=/logs/traefik.log"
+      
+      # API & Dashboard
+      - "--api.dashboard=true"
+      - "--api.debug=true"
+      - "--api.insecure=true"
+      
+      # Provider 설정
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.directory=/dynamic"
+      - "--providers.file.watch=true"
+      
+      # SSL 검증 스킵 (내부 통신용)
+      - "--serversTransport.insecureSkipVerify=true"
+      
+      # 엔트리포인트 설정
+      - "--entryPoints.web.address=:80"
+      - "--entryPoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entryPoints.web.http.redirections.entryPoint.scheme=https"
+      - "--entryPoints.web.http.redirections.entrypoint.permanent=true"
+      - "--entryPoints.websecure.address=:443"
+      
+      # Let's Encrypt 설정
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      
+    environment:
+      - TZ=${TZ}
+      
+    ports:
+      - "80:80"         # HTTP
+      - "443:443"       # HTTPS
+      - "${TRAEFIK_DASHBOARD_PORT}:8080"  # Traefik Dashboard
+      
+    volumes:
+      - "letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik/dynamic:/dynamic"
+      - "./traefik/logs:/logs"
+      
+    networks:
+      - proxy
+      - nextcloud-aio
+      
+    labels:
+      - "traefik.enable=true"
+      # Traefik Dashboard 라우팅 (옵션)
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.${NEXTCLOUD_DOMAIN}`)"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dashboard.service=api@internal"
+
+volumes:
+  letsencrypt:
+
+networks:
+  proxy:
+    name: ${PROXY_NETWORK}
+    external: true
+  nextcloud-aio:
+    name: ${NEXTCLOUD_AIO_NETWORK}
+    external: true 

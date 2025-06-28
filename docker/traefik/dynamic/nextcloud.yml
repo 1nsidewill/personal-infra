@@ -1,57 +1,105 @@
+# Nextcloud AIO Traefik 동적 라우팅
+# 참조: https://github.com/techworks-id/nextcloud_aio-traefik
+# 
+# Failover 구조:
+# 1. nextcloud-aio-domaincheck (설정/검증) → 2. nextcloud-aio-apache (실제 웹서버)
+
 http:
   routers:
-    # Nextcloud 메인 라우터
+    # ===========================================
+    # 🌐 Nextcloud 메인 라우터 (HTTPS)
+    # ===========================================
     nextcloud:
-      rule: "Host(`your-nextcloud-domain.com`)"
+      rule: "Host(`nextcloud.insidewill.site`)"
       entrypoints:
         - "websecure"
       service: nextcloud
       middlewares:
-        - nextcloud-chain
+        - nc-chain
       tls:
         certresolver: "letsencrypt"
-    
-    # HTTP에서 HTTPS로 리다이렉트
+        
+    # ===========================================
+    # 🔄 HTTP → HTTPS 리다이렉트
+    # ===========================================
     nextcloud-http:
-      rule: "Host(`your-nextcloud-domain.com`)"
+      rule: "Host(`nextcloud.insidewill.site`)"
       entrypoints:
         - "web"
       middlewares:
         - https-redirect
       service: nextcloud
 
+  # ===========================================
+  # 🎯 서비스 정의 (Failover 구조)
+  # ===========================================
   services:
+    # 메인 서비스 (Failover 지원)
     nextcloud:
+      failover:
+        service: nc_setup      # 1차: 도메인 검증/설정
+        fallback: nc_run       # 2차: 실제 웹서버
+        
+    # 1차 서비스: 도메인 검증 & 초기 설정
+    nc_setup:
+      loadBalancer:
+        healthCheck:
+          path: /
+          interval: 5s
+          timeout: 2s
+        servers:
+          - url: "http://nextcloud-aio-domaincheck:11000"
+        passHostHeader: true
+        
+    # 2차 서비스: 실제 Nextcloud 웹서버
+    nc_run:
       loadBalancer:
         servers:
-          - url: "http://172.30.1.42:11000"
+          - url: "http://nextcloud-aio-apache:11000"
+        passHostHeader: true
 
+  # ===========================================
+  # 🛡️ 미들웨어 정의
+  # ===========================================
   middlewares:
-    # HTTPS 리다이렉트
+    # HTTPS 강제 리다이렉트
     https-redirect:
       redirectscheme:
-        scheme: https
+        scheme: "https"
         permanent: true
-
-    # 보안 헤더들
-    nextcloud-secure-headers:
+        
+    # Nextcloud 보안 헤더
+    nc-secure-headers:
       headers:
+        # 프록시 헤더 설정
         hostsProxyHeaders:
           - "X-Forwarded-Host"
+          - "X-Forwarded-Proto"
+          - "X-Forwarded-For"
+          - "X-Real-IP"
+        
+        # 커스텀 요청 헤더
         customRequestHeaders:
           X-Forwarded-Proto: "https"
           X-Real-IP: ""
+          
+        # 보안 응답 헤더
         customResponseHeaders:
+          # 검색 엔진 차단
+          X-Robots-Tag: "noindex, nofollow"
+          # 보안 헤더들
           Strict-Transport-Security: "max-age=31536000; includeSubDomains; preload"
           X-Content-Type-Options: "nosniff"
           X-Frame-Options: "SAMEORIGIN"
           X-XSS-Protection: "1; mode=block"
           Referrer-Policy: "strict-origin-when-cross-origin"
+          
+        # 기본 보안 정책
         referrerPolicy: "same-origin"
-
-    # 미들웨어 체인
-    nextcloud-chain:
+        
+    # 미들웨어 체인 (순서 중요!)
+    nc-chain:
       chain:
         middlewares:
           - https-redirect
-          - nextcloud-secure-headers 
+          - nc-secure-headers 
