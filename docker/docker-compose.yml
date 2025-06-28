@@ -38,6 +38,7 @@ services:
     restart: unless-stopped
     ports:
       - "8080:8080"  # AIO 관리자 패널
+      - "8443:8443"  # AIO HTTPS 인터페이스
     environment:
       - APACHE_PORT=11000
       - APACHE_IP_BINDING=0.0.0.0
