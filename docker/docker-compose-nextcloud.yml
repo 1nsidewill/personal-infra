@@ -14,63 +14,39 @@ services:
       # Docker 소켓 (macOS/Windows에서는 경로 조정 필요)
       - /var/run/docker.sock:/var/run/docker.sock:ro
       
-    # 기본 bridge 네트워크 사용 (docker run과 동일)
+    # 기본 bridge 네트워크 사용 (참조 리포와 동일)
     network_mode: bridge
     
     ports:
       # HTTP/HTTPS는 Traefik이 처리하므로 비활성화
       # - 80:80    # Traefik이 처리
       # - 8443:8443  # Traefik이 처리
-      - "${AIO_ADMIN_PORT}:8080"  # AIO 관리 패널
+      - "${AIO_ADMIN_PORT:-8081}:8080"  # AIO 관리 패널
       
     environment:
       # ==========================================
-      # 🕒 시간대 설정
+      # 🌐 Apache 웹서버 설정 (필수)
       # ==========================================
-      - TZ=${TZ}
-      
-      # ==========================================
-      # 🌐 Apache 웹서버 설정
-      # ==========================================
-      - APACHE_PORT=${APACHE_PORT}
-      - APACHE_IP_BINDING=${APACHE_IP_BINDING}
+      - APACHE_PORT=${APACHE_PORT:-11000}
+      - APACHE_IP_BINDING=${APACHE_IP_BINDING:-127.0.0.1}
       
       # ==========================================
       # 📁 데이터 디렉토리 설정
       # ==========================================
-      - NEXTCLOUD_DATADIR=${NEXTCLOUD_DATADIR}
+      - NEXTCLOUD_DATADIR=${NEXTCLOUD_DATADIR:-/mnt/ncdata}
       
       # ==========================================
-      # 🚀 성능 & 제한 설정
+      # 🚀 성능 & 제한 설정 (기본값 사용)
       # ==========================================
-      - NEXTCLOUD_UPLOAD_LIMIT=${NEXTCLOUD_UPLOAD_LIMIT}
-      - NEXTCLOUD_MAX_TIME=${NEXTCLOUD_MAX_TIME}
-      - NEXTCLOUD_MEMORY_LIMIT=${NEXTCLOUD_MEMORY_LIMIT}
+      - NEXTCLOUD_UPLOAD_LIMIT=${NEXTCLOUD_UPLOAD_LIMIT:-10G}
+      - NEXTCLOUD_MAX_TIME=${NEXTCLOUD_MAX_TIME:-3600}
+      - NEXTCLOUD_MEMORY_LIMIT=${NEXTCLOUD_MEMORY_LIMIT:-512M}
       
       # ==========================================
       # 🔧 추가 패키지 & PHP 확장
       # ==========================================
-      - NEXTCLOUD_ADDITIONAL_APKS=${NEXTCLOUD_ADDITIONAL_APKS}
-      - NEXTCLOUD_ADDITIONAL_PHP_EXTENSIONS=${NEXTCLOUD_ADDITIONAL_PHP_EXTENSIONS}
-      
-      # ==========================================
-      # 🔒 보안 & 신뢰 도메인 설정
-      # ==========================================
-      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_DOMAIN}
-      
-      # ==========================================
-      # 🎛️ 선택적 기능들 (주석 해제하여 사용)
-      # ==========================================
-      # - AIO_DISABLE_BACKUP_SECTION=false
-      # - BORG_RETENTION_POLICY=--keep-within=7d --keep-weekly=4 --keep-monthly=6
-      # - COLLABORA_SECCOMP_DISABLED=false
-      # - NEXTCLOUD_MOUNT=/mnt/
-      # - NEXTCLOUD_TRUSTED_CACERTS_DIR=/path/to/my/cacerts
-      # - NEXTCLOUD_STARTUP_APPS=deck twofactor_totp tasks calendar contacts notes
-      # - NEXTCLOUD_ENABLE_DRI_DEVICE=true
-      # - NEXTCLOUD_KEEP_DISABLED_APPS=false
-      # - TALK_PORT=3478
-      # - WATCHTOWER_DOCKER_SOCKET_PATH=/var/run/docker.sock
+      - NEXTCLOUD_ADDITIONAL_APKS=${NEXTCLOUD_ADDITIONAL_APKS:-imagemagick}
+      - NEXTCLOUD_ADDITIONAL_PHP_EXTENSIONS=${NEXTCLOUD_ADDITIONAL_PHP_EXTENSIONS:-imagick}
       
     # SELinux 사용 시 필요
     # security_opt: ["label:disable"]

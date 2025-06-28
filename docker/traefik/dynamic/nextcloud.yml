@@ -1,8 +1,7 @@
-# Nextcloud AIO Traefik 동적 라우팅
+# Nextcloud AIO Traefik 동적 라우팅 (Host IP 방식)
 # 참조: https://github.com/techworks-id/nextcloud_aio-traefik
 # 
-# Failover 구조:
-# 1. nextcloud-aio-domaincheck (설정/검증) → 2. nextcloud-aio-apache (실제 웹서버)
+# AIO가 bridge 네트워크를 사용하므로 호스트 IP로 접근
 
 http:
   routers:
@@ -13,7 +12,7 @@ http:
       rule: "Host(`nextcloud.insidewill.site`)"
       entrypoints:
         - "websecure"
-      service: nextcloud
+      service: nextcloud-service
       middlewares:
         - nc-chain
       tls:
@@ -28,34 +27,17 @@ http:
         - "web"
       middlewares:
         - https-redirect
-      service: nextcloud
+      service: nextcloud-service
 
   # ===========================================
-  # 🎯 서비스 정의 (Failover 구조)
+  # 🎯 서비스 정의 (Host IP 방식)
   # ===========================================
   services:
-    # 메인 서비스 (Failover 지원)
-    nextcloud:
-      failover:
-        service: nc_setup      # 1차: 도메인 검증/설정
-        fallback: nc_run       # 2차: 실제 웹서버
-        
-    # 1차 서비스: 도메인 검증 & 초기 설정
-    nc_setup:
-      loadBalancer:
-        healthCheck:
-          path: /
-          interval: 5s
-          timeout: 2s
-        servers:
-          - url: "http://nextcloud-aio-domaincheck:11000"
-        passHostHeader: true
-        
-    # 2차 서비스: 실제 Nextcloud 웹서버
-    nc_run:
+    # AIO Apache 서비스 (포트 11000)
+    nextcloud-service:
       loadBalancer:
         servers:
-          - url: "http://nextcloud-aio-apache:11000"
+          - url: "http://172.30.1.42:11000"
         passHostHeader: true
 
   # ===========================================
