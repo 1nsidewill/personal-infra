@@ -58,6 +58,12 @@ show_help() {
   --core                  코어 서비스만 배포 (Traefik, Nextcloud, DB, Redis)
   --init-storage          NAS 스토리지 디렉토리 초기화
   --health-check          전체 시스템 헬스체크
+  -g, --git-update        Git pull + 변경사항 반영
+  --build [서비스]        도커 이미지 빌드 (지정 없으면 전체)
+  --start [서비스]        서비스 시작 (지정 없으면 전체)
+  --stop [서비스]         서비스 중지 (지정 없으면 전체)
+  --restart [서비스]      서비스 재시작 (지정 없으면 전체)
+  --recreate             컨테이너 재생성 (down → pull → up)
 
 예시:
   $0                      # 전체 서비스 배포
@@ -272,6 +278,94 @@ update_services() {
     log_success "서비스 업데이트 완료"
 }
 
+# 🌳 Git 업데이트 및 배포
+git_update() {
+    check_docker
+    check_dependencies
+    log_step "Git 최신 소스 가져오는 중..."
+    local BEFORE
+    BEFORE=$(git rev-parse HEAD)
+    git pull --ff-only origin main || {
+        log_error "Git pull 실패!"; return 1; }
+    local AFTER
+    AFTER=$(git rev-parse HEAD)
+    if [[ "$BEFORE" != "$AFTER" ]]; then
+        log_info "변경사항 감지 → 컨테이너 재배포"
+        $DOCKER_COMPOSE pull
+        $DOCKER_COMPOSE up -d --build
+        log_success "변경사항 배포 완료"
+    else
+        log_info "변경사항 없음, 배포 생략"
+    fi
+}
+
+# 🔨 빌드
+build_services() {
+    check_docker
+    check_dependencies
+    local services=("$@")
+    log_step "이미지 빌드 시작..."
+    if [[ ${#services[@]} -eq 0 ]]; then
+        $DOCKER_COMPOSE build
+    else
+        $DOCKER_COMPOSE build "${services[@]}"
+    fi
+    log_success "이미지 빌드 완료"
+}
+
+# ▶️ 시작
+start_services() {
+    check_docker
+    check_dependencies
+    local services=("$@")
+    log_step "서비스 시작 중..."
+    if [[ ${#services[@]} -eq 0 ]]; then
+        $DOCKER_COMPOSE up -d
+    else
+        $DOCKER_COMPOSE up -d "${services[@]}"
+    fi
+    log_success "서비스 시작 완료"
+}
+
+# ⏹️ 중지
+stop_specific_services() {
+    check_docker
+    check_dependencies
+    local services=("$@")
+    if [[ ${#services[@]} -eq 0 ]]; then
+        stop_services
+        return
+    fi
+    log_step "서비스 중지 중..."
+    $DOCKER_COMPOSE stop "${services[@]}"
+    log_success "서비스 중지 완료"
+}
+
+# 🔄 재시작
+restart_services() {
+    check_docker
+    check_dependencies
+    local services=("$@")
+    log_step "서비스 재시작 중..."
+    if [[ ${#services[@]} -eq 0 ]]; then
+        $DOCKER_COMPOSE restart
+    else
+        $DOCKER_COMPOSE restart "${services[@]}"
+    fi
+    log_success "서비스 재시작 완료"
+}
+
+# ♻️ 재생성 (down → pull → up)
+recreate_services() {
+    check_docker
+    check_dependencies
+    log_step "컨테이너 재생성 중..."
+    $DOCKER_COMPOSE down
+    $DOCKER_COMPOSE pull
+    $DOCKER_COMPOSE up -d --force-recreate
+    log_success "컨테이너 재생성 완료"
+}
+
 # 🐳 코어 서비스 배포
 deploy_core() {
     log_step "코어 서비스 배포 시작..."
@@ -386,6 +480,28 @@ main() {
             ;;
         --health-check)
             health_check
+            ;;
+        -g|--git-update)
+            git_update
+            ;;
+        --build)
+            shift
+            build_services "$@"
+            ;;
+        --start)
+            shift
+            start_services "$@"
+            ;;
+        --stop)
+            shift
+            stop_specific_services "$@"
+            ;;
+        --restart)
+            shift
+            restart_services "$@"
+            ;;
+        --recreate)
+            recreate_services
             ;;
         "")
             deploy_all
