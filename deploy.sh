@@ -351,7 +351,7 @@ stop_services() {
     $DOCKER_COMPOSE down
     
     if [[ -f "docker-compose.samba.yml" ]]; then
-        docker compose -f docker-compose.samba.yml down
+        $DOCKER_COMPOSE -f docker-compose.samba.yml down
     fi
     
     log_success "모든 서비스 중지 완료"
