@@ -56,7 +56,6 @@ services:
     image: nextcloud:latest
     container_name: nextcloud
     restart: unless-stopped
-    user: "33:33"  # www-data user
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=nextcloud
