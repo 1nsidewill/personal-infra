@@ -39,7 +39,7 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     networks:
-      - backend
+      - web
 
   # Redis Cache
   redis:
@@ -49,7 +49,7 @@ services:
     volumes:
       - ./data/redis:/data
     networks:
-      - backend
+      - web
 
   # Nextcloud
   nextcloud:
@@ -86,13 +86,10 @@ services:
       - "traefik.http.routers.nextcloud-secure.middlewares=nextcloud-redirectregex@docker"
     networks:
       - web
-      - backend
     depends_on:
       - postgres
       - redis
 
 networks:
   web:
-    external: true
-  backend:
-    driver: bridge 
+    external: true 
