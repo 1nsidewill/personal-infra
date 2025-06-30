@@ -19,6 +19,7 @@ services:
       # HTTP redirect to HTTPS
       - --entrypoints.web.http.redirections.entrypoint.to=websecure
       - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
       - --log.level=INFO
     ports:
       - "80:80"
