@@ -1,0 +1,63 @@
+services:
+  # Samba File Server
+  samba:
+    image: dperson/samba:latest
+    container_name: samba
+    restart: unless-stopped
+    environment:
+      # 타임존 설정
+      TZ: Asia/Seoul
+      
+      # SMB 설정
+      NMBD: "true"
+      
+      # 워크그룹 설정
+      WORKGROUP: ${SMB_WORKGROUP:-WORKGROUP}
+      
+      # 사용자 계정 생성 (username;password;uid;gid;comment)
+      USER: "${SMB_USER:-smbuser};${SMB_PASSWORD:-changeme};1000;1000;SMB User"
+      
+      # 공유 폴더 설정
+      # 미디어 샘플 공유 (읽기/쓰기)
+      SHARE: "media-samples;/mnt/media-samples;yes;no;no;${SMB_USER:-smbuser};${SMB_USER:-smbuser};SMB Media Samples"
+      
+      # 프로젝트 폴더 공유 (읽기/쓰기)  
+      SHARE2: "projects;/mnt/projects;yes;no;no;${SMB_USER:-smbuser};${SMB_USER:-smbuser};SMB Projects"
+      
+      # 추가 보안 설정
+      RECYCLE: "true"
+      
+    ports:
+      # SMB 포트들
+      - "139:139"     # NetBIOS Session Service
+      - "445:445"     # SMB over TCP
+      
+    volumes:
+      # 실제 NAS 스토리지 마운트
+      - ./nas/media-samples:/mnt/media-samples
+      - ./nas/projects:/mnt/projects
+      
+      # 또는 실제 NAS 디스크 직접 마운트 (실제 경로로 변경)
+      # - /mnt/nas-storage/media-samples:/mnt/media-samples
+      # - /mnt/nas-storage/projects:/mnt/projects
+      
+    networks:
+      - web
+      
+    # 추가 실행 명령어 (고급 설정)
+    command: >
+      -s "media-samples;/mnt/media-samples;yes;no;no;${SMB_USER:-smbuser}" 
+      -s "projects;/mnt/projects;yes;no;no;${SMB_USER:-smbuser}"
+      -u "${SMB_USER:-smbuser};${SMB_PASSWORD:-changeme}"
+      -w "${SMB_WORKGROUP:-WORKGROUP}"
+      
+    # 보안 설정
+    cap_add:
+      - NET_ADMIN
+      
+    # 호스트 이름 설정 
+    hostname: ${SMB_HOSTNAME:-nas-server}
+    
+networks:
+  web:
+    external: true 

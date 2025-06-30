@@ -1,5 +1,35 @@
 k8s/base/*/secret.yaml
 .env
 .env.example
-.cursor# Traefik 로그 파일들
+.cursor
+# Traefik 로그 파일들
 docker/traefik/logs/*.log
+
+# 백업 폴더
+backups/
+
+# 로그 폴더
+logs/
+
+# NAS 스토리지 (심볼릭 링크이므로 제외)
+nas/*/
+
+# 임시 파일들
+*.tmp
+*.backup
+*.bak
+
+# 데이터 폴더 (실제 서비스 데이터)
+data/postgres/
+data/redis/
+data/nextcloud/
+
+# macOS
+.DS_Store
+
+# 에디터 설정
+.vscode/
+.idea/
+
+# 테스트 파일들
+test-*

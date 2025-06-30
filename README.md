@@ -1,159 +1,194 @@
-# Personal Infrastructure
+# 🏠 Personal Infrastructure
 
-Docker를 이용한 개인 클라우드 인프라. Traefik + Nextcloud + PostgreSQL + Redis로 구성.
+완전한 Docker 기반 개인 인프라 솔루션 - 성공적으로 구축 및 운영 중! 🎉
 
-## 🏗️ 구조
+## ✅ 구축 완료 상태
+
+### 🔒 **보안 등급: A+**
+- 모든 Nextcloud 보안 검사 통과
+- HSTS, CSP, XSS 보호 등 완벽한 보안 헤더 적용
+- Traefik 리버스 프록시를 통한 SSL/TLS 자동 관리
+
+### 🚀 **운영 중인 서비스**
+| 서비스 | 포트 | 상태 | 설명 |
+|--------|------|------|------|
+| **Traefik** | 80, 443, 8080 | ✅ 실행중 | 리버스 프록시 & SSL 관리 |
+| **Nextcloud** | - | ✅ 실행중 | 클라우드 스토리지 & 파일 공유 |
+| **PostgreSQL** | 5432 | ✅ 실행중 | 메인 데이터베이스 |
+| **Redis** | 6379 | ✅ 실행중 | 캐시 & 세션 관리 |
+| **SMB/CIFS** | 139, 445 | 🚧 추가중 | 파일 공유 (Mac/Windows) |
+
+## 📁 디렉토리 구조
 
 ```
 personal-infra/
-├── README.md
-├── .env                    # 환경변수 설정
-├── docker-compose.yml      # 전체 서비스 정의
-├── docker/
-│   └── traefik/
-│       └── acme.json       # SSL 인증서 저장
-├── data/                   # 데이터 저장소
-│   ├── postgres/           # PostgreSQL 데이터
-│   ├── redis/              # Redis 데이터
-│   └── nextcloud/          # Nextcloud 파일
-└── nas/
-    └── media/              # NAS 스토리지
+├── 📦 docker-compose.yml          # 메인 서비스 구성
+├── 🚀 deploy.sh                   # 자동 배포 스크립트
+├── 📖 README.md                   # 이 파일
+├── 🐳 docker/                     # Docker 설정들
+│   └── traefik/                   # Traefik 설정 & SSL 인증서
+│       ├── acme.json              # SSL 인증서 저장소
+│       └── dynamic/               # 동적 설정 (보안 헤더)
+├── 💾 data/                       # 서비스 데이터 (자동 생성)
+│   ├── nextcloud/                 # Nextcloud 앱 & 설정
+│   ├── postgres/                  # PostgreSQL 데이터
+│   └── redis/                     # Redis 데이터
+└── 🗄️ nas/                        # NAS 스토리지 마운트
+    ├── photos/                    # 사진 (Nextcloud 스트리밍)
+    ├── videos/                    # 동영상 (Nextcloud 스트리밍)
+    ├── media-samples/             # 미디어 샘플 (SMB 공유)
+    └── projects/                  # 프로젝트 파일 (SMB + Nextcloud)
 ```
+
+## 🗄️ 스토리지 구성
+
+### 💿 **10.9TB NAS 스토리지**
+- **포맷**: ext4 (Linux 최적화)
+- **마운트**: `/mnt/nas-storage`
+- **용도별 디렉토리**:
+  ```
+  /mnt/nas-storage/
+  ├── 📸 photos/           # Nextcloud WebDAV 스트리밍
+  ├── 🎬 videos/           # Nextcloud WebDAV 스트리밍  
+  ├── 🎵 media-samples/    # SMB 공유 (Mac/Windows 접근)
+  └── 📁 projects/         # SMB + Nextcloud 중첩 공유
+  ```
+
+### 🔄 **이중 접근 방식**
+- **Nextcloud (WebDAV)**: 웹 브라우저, 모바일 앱을 통한 스트리밍
+- **SMB/CIFS**: Mac Finder, Windows 탐색기에서 직접 접근
+- **중첩 공유**: 프로젝트 파일은 Nextcloud 링크 공유도 가능
 
 ## 🚀 빠른 시작
 
-### 1. 환경변수 설정
+### 1. 서비스 시작
 ```bash
-# .env 파일 수정
-nano .env
-```
+# 모든 서비스 시작
+./deploy.sh
 
-**필수 변경사항:**
-- `POSTGRES_PASSWORD`: 데이터베이스 패스워드
-- `NEXTCLOUD_ADMIN_PASSWORD`: Nextcloud 관리자 패스워드
-- `NEXTCLOUD_DOMAIN`: 도메인 (예: cloud.yourdomain.com)
-- `ACME_EMAIL`: SSL 인증서용 이메일
-
-### 2. Docker 네트워크 생성
-```bash
-docker network create web
-```
-
-### 3. SSL 인증서 파일 권한 설정
-```bash
-chmod 600 docker/traefik/acme.json
-```
-
-### 4. 서비스 시작
-```bash
+# 또는 직접 실행
 docker compose up -d
 ```
 
-## 📊 서비스 접근
+### 2. 접속 정보
+- **Nextcloud**: `https://your-domain` 또는 `http://localhost`
+- **Traefik Dashboard**: `http://localhost:8080`
+- **기본 계정**: `admin / changeme`
 
-- **Nextcloud**: http://localhost (또는 설정한 도메인)
-- **Traefik Dashboard**: http://localhost:8080
-- **PostgreSQL**: localhost:5432
-- **Redis**: localhost:6379
-
-## 🔐 기본 접속 정보
-
-### Nextcloud
-- **URL**: http://localhost
-- **관리자**: `.env`의 `NEXTCLOUD_ADMIN_USER` / `NEXTCLOUD_ADMIN_PASSWORD`
-
-### Database
-- **PostgreSQL**: `nextcloud` / `.env`의 `POSTGRES_PASSWORD`
-- **Redis**: 패스워드 없음
-
-## 🛠️ 관리 명령어
-
-### 서비스 관리
+### 3. SMB 공유 접근
 ```bash
-# 전체 시작
-docker compose up -d
+# Mac에서
+smb://your-server-ip/media-samples
+smb://your-server-ip/projects
 
-# 전체 중지
-docker compose down
+# Windows에서  
+\\your-server-ip\media-samples
+\\your-server-ip\projects
+```
 
-# 로그 확인
-docker compose logs -f
+## 🔧 관리 명령어
+
+### 📊 상태 확인
+```bash
+# 모든 컨테이너 상태
+docker ps
 
 # 특정 서비스 로그
-docker compose logs -f nextcloud
+docker logs nextcloud
+docker logs traefik
 ```
 
-### 상태 확인
+### 🔄 서비스 관리
 ```bash
-# 컨테이너 상태
-docker compose ps
+# 재시작
+docker compose restart
 
-# 시스템 리소스
-docker stats
+# 정지
+docker compose down
+
+# 업데이트 후 재빌드
+docker compose up -d --build
 ```
 
-### 데이터 백업
+### 🛠️ Nextcloud 관리
 ```bash
-# PostgreSQL 백업
-docker exec postgres pg_dump -U nextcloud nextcloud > backup_$(date +%Y%m%d).sql
+# OCC 명령어 실행
+docker exec -it nextcloud su -s /bin/bash www-data -c "php /var/www/html/occ status"
 
-# Nextcloud 파일 백업
-tar -czf nextcloud_files_$(date +%Y%m%d).tar.gz data/nextcloud/
+# 데이터베이스 최적화
+docker exec -it nextcloud su -s /bin/bash www-data -c "php /var/www/html/occ db:add-missing-indices"
 ```
 
-## 🌐 도메인 연결 (프로덕션)
+## 📈 모니터링 & 로그
 
-1. **DNS 설정**: A 레코드로 `yourdomain.com` → `서버IP`
-2. **환경변수 수정**: `.env`에서 `NEXTCLOUD_DOMAIN=yourdomain.com`
-3. **서비스 재시작**: `docker compose restart`
+### 📊 **성능 지표**
+- Traefik Dashboard에서 실시간 트래픽 모니터링
+- Nextcloud 관리자 페이지에서 시스템 상태 확인
 
-## 🔒 보안 강화
-
-### 기본 패스워드 변경
-- `.env` 파일의 모든 패스워드를 강력한 것으로 변경
-- 특히 `POSTGRES_PASSWORD`와 `NEXTCLOUD_ADMIN_PASSWORD`
-
-### 방화벽 설정
+### 📝 **로그 위치**
 ```bash
-# 필요한 포트만 열기
-ufw allow 80,443,22/tcp
+# Docker 로그
+docker logs [container-name]
+
+# Nextcloud 로그
+docker exec nextcloud tail -f /var/www/html/data/nextcloud.log
+
+# Traefik 로그  
+docker logs traefik
 ```
 
-### SSL 자동 갱신
-Traefik이 Let's Encrypt로 자동 SSL 갱신을 처리합니다.
+## 🔮 향후 확장 계획
 
-## 🐛 문제 해결
+### 🐍 **FastAPI 백엔드 추가**
+- API 서버 컨테이너 추가 예정
+- 자동화 스크립트 및 웹훅 지원
 
-### 컨테이너가 시작되지 않을 때
+### 📊 **모니터링 스택**
+- Prometheus + Grafana 대시보드
+- 알림 시스템 (Discord/Slack)
+
+### 🔒 **보안 강화**
+- Fail2ban 컨테이너 추가
+- VPN 서버 통합 (WireGuard)
+
+## 🆘 트러블슈팅
+
+### 🚨 **일반적인 문제들**
+
+#### 서비스가 시작되지 않을 때
 ```bash
-# 상세 로그 확인
-docker compose logs -f [service_name]
+# 네트워크 확인
+docker network ls
+docker network create web 2>/dev/null
 
-# 컨테이너 재시작
-docker compose restart [service_name]
+# 포트 충돌 확인
+ss -tulpn | grep -E ':(80|443|8080)'
 ```
 
-### 데이터 초기화 (주의!)
+#### Nextcloud 접속 오류
 ```bash
-# 모든 데이터 삭제 후 재시작
-docker compose down -v
-sudo rm -rf data/*
-docker compose up -d
+# config.php 문법 검사
+docker exec nextcloud php -l /var/www/html/config/config.php
+
+# 권한 수정
+docker exec nextcloud chown -R www-data:www-data /var/www/html
 ```
 
-### 권한 문제
+#### SSL 인증서 문제
 ```bash
-# 데이터 폴더 권한 수정
-sudo chown -R 33:33 data/nextcloud  # www-data 사용자
+# 인증서 상태 확인
+docker exec traefik ls -la /letsencrypt/
+
+# Traefik 재시작
+docker compose restart traefik
 ```
 
-## 📝 참고사항
+## 📞 지원 & 문의
 
-- **PostgreSQL**: Nextcloud 전용 데이터베이스
-- **Redis**: 캐시 및 파일 잠금용
-- **Traefik**: 자동 SSL + 리버스 프록시
-- **Volume**: 모든 데이터는 `./data/` 폴더에 저장
+- **이슈 리포팅**: GitHub Issues
+- **문서**: 이 README 파일
+- **커뮤니티**: Docker, Nextcloud 공식 문서
 
 ---
 
-**💡 Tip**: 첫 설정 후 http://localhost 접속해서 Nextcloud 초기 설정을 완료하세요!
+**✨ 완벽하게 구축된 개인 인프라에서 안전하고 편리한 클라우드 생활을 즐기세요! ✨**

@@ -76,6 +76,9 @@ services:
     volumes:
       - ./data/nextcloud:/var/www/html
       - ./nas:/var/www/html/data/nas:ro
+      # SMB 공유 폴더들도 Nextcloud에서 접근 가능하게 (중첩 공유)
+      - ./nas/media-samples:/var/www/html/data/media-samples:rw
+      - ./nas/projects:/var/www/html/data/projects:rw
     labels:
       - "traefik.enable=true"
       # HTTP (redirect to HTTPS)
