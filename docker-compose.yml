@@ -75,7 +75,7 @@ services:
       - OVERWRITE_CLI_URL=https://${NEXTCLOUD_DOMAIN:-localhost}
     volumes:
       - ./data/nextcloud:/var/www/html
-      - ./nas:/var/www/html/data/nas:ro
+      - ./nas/storage:/var/www/html/data/storage:rw
       # SMB 공유 폴더들도 Nextcloud에서 접근 가능하게 (중첩 공유)
       - ./nas/media-samples:/var/www/html/data/media-samples:rw
       - ./nas/projects:/var/www/html/data/projects:rw

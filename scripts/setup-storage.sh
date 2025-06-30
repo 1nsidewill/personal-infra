@@ -118,8 +118,7 @@ create_directories() {
     log_step "디렉토리 구조 생성 중..."
     
     local nas_dirs=(
-        "/mnt/nas-storage/photos"
-        "/mnt/nas-storage/videos"
+        "/mnt/nas-storage/storage"
         "/mnt/nas-storage/media-samples"
         "/mnt/nas-storage/projects"
     )
@@ -158,28 +157,13 @@ create_test_files() {
     log_step "테스트 파일 생성 중..."
     
     # 각 디렉토리에 README 파일 생성
-    cat > /mnt/nas-storage/photos/README.md << 'EOF'
-# 📸 Photos Directory
+    cat > /mnt/nas-storage/storage/README.md << 'EOF'
+# 🗄️ Storage Directory
 
-이 폴더는 사진 파일들을 저장하는 곳입니다.
+이 폴더는 NAS의 모든 데이터를 저장하는 메인 스토리지입니다.
 
-- Nextcloud WebDAV를 통해 스트리밍 가능
-- 웹 브라우저, 모바일 앱에서 접근 가능
-- 자동 동기화 및 백업
-
-지원 형식: JPG, PNG, HEIC, RAW 등
-EOF
-
-    cat > /mnt/nas-storage/videos/README.md << 'EOF'
-# 🎬 Videos Directory
-
-이 폴더는 동영상 파일들을 저장하는 곳입니다.
-
-- Nextcloud WebDAV를 통해 스트리밍 가능
-- 웹 브라우저에서 직접 재생 가능
-- 모바일 앱 동기화 지원
-
-지원 형식: MP4, AVI, MKV, MOV 등
+- Nextcloud, SMB, 기타 서비스에서 공유
+- 하위 폴더로 photos, videos, texts, utils 등 자유롭게 생성/관리
 EOF
 
     cat > /mnt/nas-storage/media-samples/README.md << 'EOF'

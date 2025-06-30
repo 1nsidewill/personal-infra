@@ -2,6 +2,7 @@
 
 # 🏠 Personal Infrastructure Deployment Script
 # 완전 자동화된 배포 스크립트 with 이모지 로깅 & 분기처리
+check_dependencies
 
 set -e
 
