@@ -17,12 +17,8 @@ services:
       # 사용자 계정 생성 (username;password;uid;gid;comment)
       USER: "${SMB_USER:-smbuser};${SMB_PASSWORD:-changeme};1000;1000;SMB User"
       
-      # 공유 폴더 설정
-      # 미디어 샘플 공유 (읽기/쓰기)
-      SHARE: "media-samples;/mnt/media-samples;yes;no;no;${SMB_USER:-smbuser};${SMB_USER:-smbuser};SMB Media Samples"
-      
-      # 프로젝트 폴더 공유 (읽기/쓰기)  
-      SHARE2: "projects;/mnt/projects;yes;no;no;${SMB_USER:-smbuser};${SMB_USER:-smbuser};SMB Projects"
+      # 공유 폴더 설정 (storage/smb 전용)
+      SHARE: "smb;/mnt/smb;yes;no;no;${SMB_USER:-smbuser};${SMB_USER:-smbuser};Main SMB Share"
       
       # 추가 보안 설정
       RECYCLE: "true"
@@ -34,8 +30,7 @@ services:
       
     volumes:
       # 실제 NAS 스토리지 마운트
-      - ./nas/media-samples:/mnt/media-samples
-      - ./nas/projects:/mnt/projects
+      - ./nas/smb:/mnt/smb
       
       # 또는 실제 NAS 디스크 직접 마운트 (실제 경로로 변경)
       # - /mnt/nas-storage/media-samples:/mnt/media-samples
@@ -46,8 +41,7 @@ services:
       
     # 추가 실행 명령어 (고급 설정)
     command: >
-      -s "media-samples;/mnt/media-samples;yes;no;no;${SMB_USER:-smbuser}" 
-      -s "projects;/mnt/projects;yes;no;no;${SMB_USER:-smbuser}"
+      -s "smb;/mnt/smb;yes;no;no;${SMB_USER:-smbuser}" 
       -u "${SMB_USER:-smbuser};${SMB_PASSWORD:-changeme}"
       -w "${SMB_WORKGROUP:-WORKGROUP}"
       
