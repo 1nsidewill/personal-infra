@@ -116,10 +116,8 @@ create_directories() {
         "data/postgres"
         "data/redis" 
         "data/nextcloud"
-        "nas/photos"
-        "nas/videos"
-        "nas/media-samples"
-        "nas/projects"
+        "nas/storage"
+        "nas/smb"
         "docker/traefik/dynamic"
         "logs"
     )
@@ -144,10 +142,8 @@ init_storage() {
     
     if [[ -d "/mnt/nas-storage" ]]; then
         local nas_dirs=(
-            "/mnt/nas-storage/photos"
-            "/mnt/nas-storage/videos" 
-            "/mnt/nas-storage/media-samples"
-            "/mnt/nas-storage/projects"
+            "/mnt/nas-storage/storage"
+            "/mnt/nas-storage/smb"
         )
         
         for dir in "${nas_dirs[@]}"; do
@@ -156,8 +152,8 @@ init_storage() {
             log_info "NAS 디렉토리 생성: $dir"
         done
         
-        # 심볼릭 링크 생성 (프로젝트 nas/ 폴더에서)
-        for subdir in photos videos media-samples projects; do
+        # 심볼릭 링크 생성
+        for subdir in storage smb; do
             if [[ ! -L "nas/$subdir" ]]; then
                 ln -sf "/mnt/nas-storage/$subdir" "nas/$subdir"
                 log_info "심볼릭 링크 생성: nas/$subdir -> /mnt/nas-storage/$subdir"
@@ -186,7 +182,7 @@ check_status() {
     echo "  • Traefik Dashboard: http://localhost:8080"
     
     if docker ps | grep -q samba; then
-        echo "  • SMB 공유: smb://$(hostname -I | awk '{print $1}')/media-samples"
+        echo "  • SMB 공유: smb://$(hostname -I | awk '{print $1}')/smb"
     fi
 }
 
