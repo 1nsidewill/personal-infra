@@ -86,6 +86,7 @@ services:
       - "traefik.http.routers.nextcloud-secure.rule=Host(`${NEXTCLOUD_DOMAIN:-localhost}`)"
       - "traefik.http.routers.nextcloud-secure.entrypoints=websecure"
       - "traefik.http.routers.nextcloud-secure.tls=true"
+      - "traefik.http.routers.nextcloud-secure.tls.certresolver=letsencrypt"
       # 보안 헤더 미들웨어 적용
       - "traefik.http.routers.nextcloud-secure.middlewares=nextcloud-redirectregex@docker,security-headers@file"
       # CalDAV/CardDAV redirects
