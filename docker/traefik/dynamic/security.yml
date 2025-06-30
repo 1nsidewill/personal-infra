@@ -1,0 +1,23 @@
+http:
+  middlewares:
+    security-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+          X-Forwarded-Host: ""
+          X-Forwarded-For: ""
+        customResponseHeaders:
+          # HSTS 헤더 (1년간 유효)
+          Strict-Transport-Security: "max-age=31536000; includeSubDomains; preload"
+          # XSS 보호
+          X-XSS-Protection: "1; mode=block"
+          # Content Type 스니핑 방지
+          X-Content-Type-Options: "nosniff"
+          # 클릭재킹 방지
+          X-Frame-Options: "SAMEORIGIN"
+          # Referrer 정책
+          Referrer-Policy: "strict-origin-when-cross-origin"
+          # CSP 기본 설정 (Nextcloud에 맞게 조정)
+          Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; media-src 'self'; object-src 'none'; child-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
+          # 권한 정책
+          Permissions-Policy: "geolocation=(), microphone=(), camera=()" 

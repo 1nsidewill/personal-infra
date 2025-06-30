@@ -8,6 +8,8 @@ services:
       - --api.insecure=true
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
       # SSL 설정 (기존 인증서 재사용, 새로 발급 안함)
@@ -24,6 +26,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./docker/traefik:/letsencrypt
+      - ./docker/traefik/dynamic:/etc/traefik/dynamic:ro
     networks:
       - web
 
@@ -65,11 +68,14 @@ services:
       - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER:-admin}
       - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD:-changeme}
       - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_DOMAIN:-localhost}
-      - TRUSTED_PROXIES=traefik
+      - TRUSTED_PROXIES=172.16.0.0/12 10.0.0.0/8 192.168.0.0/16
       - OVERWRITEPROTOCOL=https
+      - OVERWRITEHOST=${NEXTCLOUD_DOMAIN:-localhost}
+      - OVERWRITEWEBROOT=
+      - OVERWRITE_CLI_URL=https://${NEXTCLOUD_DOMAIN:-localhost}
     volumes:
       - ./data/nextcloud:/var/www/html
-      - ./nas:/var/www/html/data/nas:ro
+      - ./nas:/var/www/html/data/ㅈㅈnas:ro
     labels:
       - "traefik.enable=true"
       # HTTP (redirect to HTTPS)
@@ -79,11 +85,12 @@ services:
       - "traefik.http.routers.nextcloud-secure.rule=Host(`${NEXTCLOUD_DOMAIN:-localhost}`)"
       - "traefik.http.routers.nextcloud-secure.entrypoints=websecure"
       - "traefik.http.routers.nextcloud-secure.tls=true"
+      # 보안 헤더 미들웨어 적용
+      - "traefik.http.routers.nextcloud-secure.middlewares=nextcloud-redirectregex@docker,security-headers@file"
       # CalDAV/CardDAV redirects
       - "traefik.http.middlewares.nextcloud-redirectregex.redirectregex.permanent=true"
       - "traefik.http.middlewares.nextcloud-redirectregex.redirectregex.regex=https://(.*)/.well-known/(?:card|cal)dav"
       - "traefik.http.middlewares.nextcloud-redirectregex.redirectregex.replacement=https://$${1}/remote.php/dav"
-      - "traefik.http.routers.nextcloud-secure.middlewares=nextcloud-redirectregex@docker"
     networks:
       - web
     depends_on:
