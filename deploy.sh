@@ -2,7 +2,6 @@
 
 # 🏠 Personal Infrastructure Deployment Script
 # 완전 자동화된 배포 스크립트 with 이모지 로깅 & 분기처리
-check_dependencies
 
 set -e
 
@@ -64,6 +63,7 @@ show_help() {
   --stop [서비스]         서비스 중지 (지정 없으면 전체)
   --restart [서비스]      서비스 재시작 (지정 없으면 전체)
   --recreate             컨테이너 재생성 (down → pull → up)
+  --reset-network        Docker 네트워크 재생성 (문제 해결용)
 
 예시:
   $0                      # 전체 서비스 배포
@@ -113,6 +113,24 @@ create_network() {
     else
         log_info "네트워크 'web' 이미 존재"
     fi
+}
+
+# 🔄 네트워크 재생성
+recreate_network() {
+    check_dependencies
+    log_step "Docker 네트워크 재생성 중..."
+    
+    # 컨테이너 중지
+    $DOCKER_COMPOSE down
+    
+    # 네트워크 제거 및 재생성
+    if docker network ls | grep -q "web"; then
+        docker network rm web
+        log_info "기존 네트워크 'web' 제거 완료"
+    fi
+    
+    docker network create web
+    log_success "네트워크 'web' 재생성 완료"
 }
 
 create_directories() {
@@ -502,6 +520,9 @@ main() {
             ;;
         --recreate)
             recreate_services
+            ;;
+        --reset-network)
+            recreate_network
             ;;
         "")
             deploy_all
