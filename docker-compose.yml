@@ -71,6 +71,9 @@ services:
     container_name: nextcloud
     restart: unless-stopped
     environment:
+      # PHP 업로드 설정
+      - PHP_UPLOAD_LIMIT=10G
+      - PHP_MEMORY_LIMIT=512M
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=nextcloud
       - POSTGRES_USER=nextcloud
