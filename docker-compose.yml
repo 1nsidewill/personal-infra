@@ -12,19 +12,25 @@ services:
       - --providers.file.watch=true
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
-      # SSL 설정 (기존 인증서 재사용, 새로 발급 안함)
+      # SSL 설정 (DNS Challenge 사용)
       - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-admin@example.com}
       - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
       - --certificatesresolvers.letsencrypt.acme.keytype=EC256
       # HTTP redirect to HTTPS
       - --entrypoints.web.http.redirections.entrypoint.to=websecure
       - --entrypoints.web.http.redirections.entrypoint.scheme=https
-      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      # DNS Challenge (Cloudflare)
+      - --certificatesresolvers.letsencrypt.acme.dnschallenge=true
+      - --certificatesresolvers.letsencrypt.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.letsencrypt.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53
       - --log.level=INFO
     ports:
       - "80:80"
       - "443:443"
       - "8080:8080"
+    environment:
+      - CF_API_EMAIL=${CF_API_EMAIL}
+      - CF_API_KEY=${CF_API_KEY}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./docker/traefik:/letsencrypt
@@ -88,11 +94,13 @@ services:
       # HTTP (redirect to HTTPS)
       - "traefik.http.routers.nextcloud.rule=Host(`${NEXTCLOUD_DOMAIN:-localhost}`)"
       - "traefik.http.routers.nextcloud.entrypoints=web"
-      # HTTPS (use existing certificate)
+      # HTTPS (use wildcard certificate)
       - "traefik.http.routers.nextcloud-secure.rule=Host(`${NEXTCLOUD_DOMAIN:-localhost}`)"
       - "traefik.http.routers.nextcloud-secure.entrypoints=websecure"
       - "traefik.http.routers.nextcloud-secure.tls=true"
       - "traefik.http.routers.nextcloud-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.nextcloud-secure.tls.domains[0].main=insidewill.site"
+      - "traefik.http.routers.nextcloud-secure.tls.domains[0].sans=*.insidewill.site"
       # 보안 헤더 미들웨어 적용
       - "traefik.http.routers.nextcloud-secure.middlewares=nextcloud-redirectregex@docker,security-headers@file"
       # CalDAV/CardDAV redirects
