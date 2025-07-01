@@ -120,8 +120,14 @@ recreate_network() {
     check_dependencies
     log_step "Docker 네트워크 재생성 중..."
     
-    # 컨테이너 중지
+    # 모든 컨테이너 중지
     $DOCKER_COMPOSE down
+    
+    # SMB 컨테이너도 중지 (별도 compose 파일)
+    if [[ -f "docker-compose.samba.yml" ]]; then
+        $DOCKER_COMPOSE -f docker-compose.samba.yml down
+        log_info "SMB 서비스 중지 완료"
+    fi
     
     # 네트워크 제거 및 재생성
     if docker network ls | grep -q "web"; then
