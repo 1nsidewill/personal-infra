@@ -89,8 +89,8 @@ services:
       - OVERWRITE_CLI_URL=https://${NEXTCLOUD_DOMAIN:-localhost}
     volumes:
       - ./data/nextcloud:/var/www/html
-      - /mnt/nas-storage/storage:/var/www/html/data/storage:rw
-      - /mnt/nas-storage/smb:/var/www/html/data/smb:rw
+      - /mnt/nas-storage/storage:/var/www/html/data/insidewill/storage
+      - /mnt/nas-storage/smb:/var/www/html/data/insidewill/smb
     labels:
       - "traefik.enable=true"
       # HTTP (redirect to HTTPS)
