@@ -30,7 +30,7 @@ services:
       
     volumes:
       # 실제 NAS 스토리지 마운트
-      - ./nas/smb:/mnt/smb
+      - ./mnt/smb:/mnt/smb
       
       # 또는 실제 NAS 디스크 직접 마운트 (실제 경로로 변경)
       # - /mnt/nas-storage/media-samples:/mnt/media-samples
