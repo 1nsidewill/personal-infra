@@ -162,6 +162,8 @@ services:
       - redis
     networks:
       - web
+    volumes:
+      - /mnt/smb/downloads:/app/downloads
 
 networks:
   web:
