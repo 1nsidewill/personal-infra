@@ -117,7 +117,7 @@ services:
 
   super-rapidgator:
     build:
-      context: ./super-rapidgator
+      context: /srv/app/super-rapidgator
       dockerfile: Dockerfile
     image: super-rapidgator:latest
     container_name: super-rapidgator
