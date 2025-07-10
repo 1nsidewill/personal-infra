@@ -115,6 +115,54 @@ services:
       - postgres
       - redis
 
+  super-rapidgator:
+    build:
+      context: ./super-rapidgator
+      dockerfile: Dockerfile
+    image: super-rapidgator:latest
+    container_name: super-rapidgator
+    restart: unless-stopped
+    env_file: .env        # ⬅️ Redis URL, Rapidgator 인증 등
+    environment:
+      # 내부 서비스가 redis 컨테이너를 바라보도록
+      - REDIS_URL=redis://redis:6379/0
+      # FastAPI 기본 설정(필요 시)
+      - HOST=0.0.0.0
+      - PORT=8000
+    depends_on:
+      - redis
+      - postgres          # 필요 없으면 제거
+    networks:
+      - web
+    ports:
+      - "8000:8000"
+    volumes:
+      - /mnt/smb/downloads:/app/downloads 
+    # 포트 내보낼 필요 없음(프록시만 통과하면 됨)
+
+  # --------------------------------------------------
+  # Celery Worker
+  # --------------------------------------------------
+  celery:
+    image: super-rapidgator:latest     # 앱 이미지 재사용
+    container_name: super-rapidgator-worker
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      # concurrency 조정
+      - CELERY_CONCURRENCY=4
+    command: >
+      uv run celery
+      -A src.super_rapidgator.workers.celery_app
+      worker
+      --loglevel=info
+      --concurrency=${CELERY_CONCURRENCY:-4}
+    depends_on:
+      - redis
+    networks:
+      - web
+
 networks:
   web:
     external: true 
